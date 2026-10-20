@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falling Hearts</title>
+<style>
+:root {
+  --site-primary: #f45b83;
+  --site-secondary: #6d254c;
+  --site-background: #210f28;
+  --site-on-primary: #ffffff;
+  --site-on-secondary: #ffffff;
+  --site-on-background: #fff3f8;
+  --site-font-body: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+  --site-font-heading: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { font-family: var(--site-font-body); background: var(--site-background); color: var(--site-on-background); }
+.app {
+  position: relative; min-height: 100vh; overflow: hidden; isolation: isolate;
+  display: grid; place-items: center; padding: calc(28px * var(--site-spacing-scale));
+  background-color: var(--site-background);
+  background-image: radial-gradient(ellipse at 50% 10%, #692449 0%, #35152f 40%, var(--site-background) 78%);
+}
+.glow { position: absolute; width: 70vw; height: 70vw; max-width: 620px; max-height: 620px; border-radius: 50%; background: #e83e7a; filter: blur(100px); opacity: .13; z-index: -1; pointer-events: none; }
+#rain { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; opacity: var(--site-decoration-opacity); }
+.heart { position: absolute; top: -12vh; animation: fall linear forwards; filter: drop-shadow(0 0 9px #ff5d9d88); user-select: none; will-change: transform; }
+@keyframes fall { 0% { transform: translate3d(0,-8vh,0) rotate(0deg); opacity: 0; } 10% { opacity: var(--heart-opacity, .8); } 90% { opacity: .8; } 100% { transform: translate3d(var(--drift),115vh,0) rotate(var(--spin)); opacity: 0; } }
+.card {
+  width: min(100%, 440px); text-align: center; position: relative; z-index: 1;
+  padding: calc(38px * var(--site-spacing-scale)) calc(25px * var(--site-spacing-scale));
+  border: 1px solid #ffb2d344; border-radius: calc(30px * var(--site-radius-scale));
+  background: #ffffff0d; box-shadow: 0 20px 80px #09020d66, inset 0 1px 0 #ffffff16;
+  backdrop-filter: blur(10px);
+}
+.eyebrow { font-size: .76rem; letter-spacing: .24em; text-transform: uppercase; color: #ffc1d7; }
+.big-heart { font-size: clamp(4rem, 18vw, 6.3rem); line-height: 1.25; margin: 12px 0; display: inline-block; animation: pulse 1.5s ease-in-out infinite; filter: drop-shadow(0 0 22px #ff4c91aa); }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+h1 { font-family: var(--site-font-heading); font-size: calc(clamp(2.1rem, 9vw, 3.3rem) * var(--site-heading-scale)); line-height: 1.05; margin: 8px 0 14px; letter-spacing: -.045em; }
+p { color: #f8dce8; line-height: 1.7; margin: 0 auto 24px; max-width: 30ch; }
+button { font: inherit; font-weight: 750; border: 0; border-radius: 999px; padding: 14px 22px; min-height: 48px; cursor: pointer; transition: transform .18s, filter .18s; }
+button:hover { transform: translateY(-2px); filter: brightness(1.08); }
+button:active { transform: scale(.97); }
+.primary { color: var(--site-on-primary); background: var(--site-primary); box-shadow: 0 8px 25px #f45b8355; }
+.secondary { color: #ffe5ef; background: #ffffff12; border: 1px solid #ffb2d344; }
+.actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.decorations { font-size: clamp(1.5rem, 7vw, 2.15rem); letter-spacing: .12em; margin: -5px 0 22px; animation: floaty 3s ease-in-out infinite; }
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.note { font-size: .8rem; margin: 22px 0 0; color: #d7a8bf; }
+@media (prefers-reduced-motion: reduce) { .big-heart { animation: none; } .heart { animation-duration: 18s !important; } }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <div class="glow" aria-hidden="true"></div>
+  <div id="rain" aria-hidden="true"></div>
+  <section class="card" aria-label="Falling hearts">
+    <div class="eyebrow">a little love for you</div>
+    <div class="big-heart" aria-hidden="true">💗</div>
+    <h1>Happy Birthday,<br>Motu! 🎂</h1>
+    <p>It’s your happiest birthday ever! 💖 May your day be filled with love, smiles, sweet surprises, and endless happiness. You deserve the whole world, Motu! 🧸💕</p>
+    <div class="actions">
+      <button class="primary" id="more">Send more hearts 💖</button>
+      <button class="secondary" id="toggle" aria-pressed="false">Pause hearts ⏸</button>
+    </div>
+    <div class="note">Made with love ❤️ • Tap for a little more magic</div>
+  </section>
+</main>
+<script>
+(() => {
+  const rain = document.getElementById('rain');
+  const more = document.getElementById('more');
+  const toggle = document.getElementById('toggle');
+  const symbols = ['💗','💖','💕','💘','❤️','💞','💓','🤍','🧸','🦋','🎁','🌸','🌷','✨','🎀','⭐','💐','🐻'];
+  let paused = false;
+  let timer;
+  function heart(burst = false) {
+    if (paused) return;
+    const el = document.createElement('span');
+    el.className = 'heart';
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    const size = 14 + Math.random() * 24;
+    const duration = burst ? 3 + Math.random() * 2 : 7 + Math.random() * 8;
+    el.style.left = Math.random() * 100 + '%';
+    el.style.fontSize = size + 'px';
+    el.style.animationDuration = duration + 's';
+    el.style.setProperty('--drift', (Math.random() * 180 - 90) + 'px');
+    el.style.setProperty('--spin', (Math.random() * 300 - 150) + 'deg');
+    el.style.setProperty('--heart-opacity', (0.35 + Math.random() * .6).toFixed(2));
+    rain.appendChild(el);
+    el.addEventListener('animationend', () => el.remove(), {once:true});
+  }
+  function start() { timer = setInterval(() => heart(), 260); }
+  function stop() { clearInterval(timer); }
+  more.addEventListener('click', () => { for (let i = 0; i < 24; i++) setTimeout(() => heart(true), i * 65); });
+  toggle.addEventListener('click', () => {
+    paused = !paused;
+    toggle.textContent = paused ? 'Resume hearts ▶' : 'Pause hearts ⏸';
+    toggle.setAttribute('aria-pressed', String(paused));
+    if (paused) stop(); else start();
+  });
+  for (let i = 0; i < 18; i++) setTimeout(() => heart(), i * 120);
+  start();
+})();
+</script>
+</body>
+</html>
